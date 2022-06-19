@@ -49,3 +49,9 @@ func (r *BaseRepository) UpdateUser(user *models.User) error {
 func (r *BaseRepository) DeleteUser(id string) error {
 	return r.db.Where("id = ?", id).Delete(&models.User{}).Error
 }
+
+func (r *BaseRepository) GetUserByUsernameAndPassword(username string, password string) (models.User, error) {
+	var user models.User
+	err := r.db.Where("username = ? AND password = ?", username, password).First(&user).Error
+	return user, err
+}

@@ -4,27 +4,35 @@ package controllers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
+	"time"
 
 	"restAPI/models"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
-
-var db *gorm.DB
-var err error
 
 // BaseHandler will hold everything that controller needs
 type BaseHandler struct {
 	userRepository models.UserRepository
+	sessions       map[string]Session
+}
+
+type Session struct {
+	username string
+	expiry   time.Time
+}
+
+func Expired(s Session) bool {
+	return s.expiry.Before(time.Now())
 }
 
 // NewHandler returns a new BaseHandler
-func NewHandler(userRepository models.UserRepository) *BaseHandler {
+func NewHandler(userRepository models.UserRepository, sessions map[string]Session) *BaseHandler {
 	return &BaseHandler{
 		userRepository: userRepository,
+		sessions:       sessions,
 	}
 }
 
@@ -101,8 +109,9 @@ func (h *BaseHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if id != user.ID {
-		http.Error(w, "ID in URL must match ID in request body", http.StatusBadRequest)
+	idInt, err := strconv.Atoi(id)
+	if idInt != user.ID {
+		http.Error(w, "id in URL (e.g. /user/2) must match id in request body (e.g. {\"id\":2,...})", http.StatusBadRequest)
 		return
 	}
 
@@ -135,4 +144,46 @@ func (h *BaseHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "User deleted"})
+}
+
+// Create a struct that models the structure of a user in the request body
+type Credentials struct {
+	Password string `json:"password"`
+	Username string `json:"username"`
+}
+
+func (h *BaseHandler) Login(w http.ResponseWriter, r *http.Request) {
+
+	var creds Credentials
+
+	err := json.NewDecoder(r.Body).Decode(&creds)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	user, err := h.userRepository.GetUserByUsernameAndPassword(creds.Username, creds.Password)
+
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	sessionToken := uuid.NewString()
+	expiresAt := time.Now().Add(120 * time.Second)
+
+	http.SetCookie(w, &http.Cookie{
+		Name:    "session_token",
+		Value:   sessionToken,
+		Expires: expiresAt,
+	})
+
+	h.sessions[sessionToken] = Session{
+		username: user.Username,
+		expiry:   expiresAt,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(user)
 }

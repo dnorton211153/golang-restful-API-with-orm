@@ -2,8 +2,9 @@ package models
 
 // create User model
 type User struct {
-	ID       string `json:"id,omitempty"`
-	Name     string `json:"name,omitempty"`
+	// auto increment id
+	ID       int    `gorm:"primary_key,autoIncrement" json:"id"`
+	Username string `json:"username,omitempty"`
 	Email    string `json:"email,omitempty"`
 	Password string `json:"password,omitempty"`
 }
@@ -15,4 +16,5 @@ type UserRepository interface {
 	GetUserByID(id string) (User, error)
 	UpdateUser(user *User) error
 	DeleteUser(id string) error
+	GetUserByUsernameAndPassword(username string, password string) (User, error)
 }

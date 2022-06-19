@@ -23,6 +23,10 @@ import (
 )
 
 var db *gorm.DB
+var userHandler *controllers.BaseHandler
+
+// Track user sessions in memory
+var sessions = map[string]controllers.Session{}
 
 // main function
 func main() {
@@ -52,7 +56,7 @@ func main() {
 	userRepository := repositories.NewUserRepository(db)
 
 	// Create handlers with the repositories
-	userHandler := controllers.NewHandler(userRepository)
+	userHandler = controllers.NewHandler(userRepository, sessions)
 
 	// create a new router
 	router := mux.NewRouter()
@@ -62,9 +66,43 @@ func main() {
 	router.HandleFunc("/user/{id}", userHandler.Get).Methods("GET")
 	router.HandleFunc("/user/{id}", userHandler.Update).Methods("PUT")
 	router.HandleFunc("/user/{id}", userHandler.Delete).Methods("DELETE")
-	router.HandleFunc("/user", userHandler.GetAll).Methods("GET")
+	router.HandleFunc("/user", validateSession(http.HandlerFunc(userHandler.GetAll))).Methods("GET")
+	router.HandleFunc("/login", userHandler.Login).Methods("POST")
 
 	// start the server
 	log.Fatal(http.ListenAndServe(":8000", router))
 
+}
+
+func validateSession(next http.Handler) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		c, err := r.Cookie("session_token")
+		if err != nil {
+			if err == http.ErrNoCookie {
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		sessionToken := c.Value
+
+		// We then get the session from our session map
+		userSession, exists := sessions[sessionToken]
+		if !exists {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		if controllers.Expired(userSession) {
+			delete(sessions, sessionToken)
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+
+		// do something after the request
+	})
 }
