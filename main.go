@@ -57,8 +57,12 @@ func main() {
 	// create a new router
 	router := mux.NewRouter()
 
-	// add a route to handle the user resource
+	// user routes
 	router.HandleFunc("/user", userHandler.Create).Methods("POST")
+	router.HandleFunc("/user/{id}", userHandler.Get).Methods("GET")
+	router.HandleFunc("/user/{id}", userHandler.Update).Methods("PUT")
+	router.HandleFunc("/user/{id}", userHandler.Delete).Methods("DELETE")
+	router.HandleFunc("/user", userHandler.GetAll).Methods("GET")
 
 	// start the server
 	log.Fatal(http.ListenAndServe(":8000", router))

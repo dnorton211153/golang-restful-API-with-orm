@@ -25,3 +25,27 @@ func NewUserRepository(db *gorm.DB) *BaseRepository {
 func (r *BaseRepository) Create(user *models.User) error {
 	return r.db.Create(user).Error
 }
+
+// GetAllUsers returns all users
+func (r *BaseRepository) GetAllUsers() ([]models.User, error) {
+	var users []models.User
+	err := r.db.Find(&users).Error
+	return users, err
+}
+
+// getUserByID returns a user by id
+func (r *BaseRepository) GetUserByID(id string) (models.User, error) {
+	var user models.User
+	err := r.db.Where("id = ?", id).First(&user).Error
+	return user, err
+}
+
+// UpdateUser updates a user
+func (r *BaseRepository) UpdateUser(user *models.User) error {
+	return r.db.Save(user).Error
+}
+
+// DeleteUser deletes a user
+func (r *BaseRepository) DeleteUser(id string) error {
+	return r.db.Where("id = ?", id).Delete(&models.User{}).Error
+}
