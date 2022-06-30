@@ -1,8 +1,11 @@
-# Golang RESTful API w/ mux/gorm/MySQL
+# Golang RESTful API w/ mux/gorm/MySQL and Google+ SSO
 
 ```
 This is a simple example of a Golang RESTful API,
 using the gorm ORM library and the gorilla/mux router.
+
+Login page and Google SSO/OAuth2 added to the project as well.
+(Only working for designated test users.)
 
 Tested with Postman (http://localhost:8000/user route)
 
