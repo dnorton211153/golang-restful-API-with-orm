@@ -1,4 +1,5 @@
-# Golang RESTful API w/ mux/gorm/MySQL and Google+ SSO
+# Golang RESTful API
+## w/ mux/gorm/MySQL and Google+ OAuth2 SSO
 
 ```
 This is a simple example of a Golang RESTful API,
