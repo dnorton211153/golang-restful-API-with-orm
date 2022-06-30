@@ -8,6 +8,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -58,6 +59,10 @@ func main() {
 	// Create handlers with the repositories
 	userHandler = controllers.NewHandler(userRepository, sessions)
 
+	var dir string
+	flag.StringVar(&dir, "dir", "./static", "the directory to serve files from")
+	flag.Parse()
+
 	// create a new router
 	router := mux.NewRouter()
 
@@ -68,6 +73,11 @@ func main() {
 	router.HandleFunc("/user/{id}", userHandler.Delete).Methods("DELETE")
 	router.HandleFunc("/user", validateSession(http.HandlerFunc(userHandler.GetAll))).Methods("GET")
 	router.HandleFunc("/login", userHandler.Login).Methods("POST")
+	router.HandleFunc("/sso", controllers.SSO).Methods("GET")
+	router.HandleFunc("/callback", controllers.Callback).Methods("GET")
+
+	// This will serve files under http://localhost:8000/<filename> in the 'dir' directory.
+    router.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir(dir))))
 
 	// start the server
 	log.Fatal(http.ListenAndServe(":8000", router))

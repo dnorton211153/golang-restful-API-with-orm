@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Norton's First Go App</title>
+    <script src="https://kit.fontawesome.com/48d135817c.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <!-- login form-->
+    <div>
+        <form id="localLogin" action="/login" method="post">
+          <div class="row">
+             <h2>
+                Proof of Concept: Login with Google or Manually
+             </h2>
+
+           
+              <div class="col">
+                <!-- <a href="#" class="fb btn">
+                   <i class="fa fa-facebook fa-fw"></i> Login with Facebook
+                 </a>
+                 <a href="#" class="twitter btn">
+                    <i class="fa fa-twitter fa-fw"></i> Login with Twitter
+                  </a> -->
+                  <a href="/sso" class="google btn">
+                    <i class="fa fa-google fa-fw"></i> Login with Google+
+                  </a>
+                </div>
+           
+               <div class="col">
+                  <div class="hide-md-lg">
+                      <p>Or sign in manually:</p>
+                   </div>
+           
+                   <input type="text" 
+                      name="username" 
+                      placeholder="Username" 
+                      required
+                    >
+                   <input type="password" 
+                       name="password" 
+                       placeholder="Password" 
+                       required 
+                    >
+                   <input type="submit" value="Login">
+               </div>
+           </div>
+        </form>
+        
+        <div class="bottom-container">
+          <div class="row">
+             <div class="col">
+               <a href="#" style="color:white" class="btn">Sign up</a>
+              </div>
+              <div class="col">
+                <a href="#" style="color:white" class="btn">Forgot password?</a>
+              </div>
+            </div>
+         </div>
+       </div>
+       
+       <script>
+            document.getElementById('localLogin').addEventListener('submit', function(e){
+                e.preventDefault();
+
+                var body = {
+                    username: e.target.elements.username.value,
+                    password: e.target.elements.password.value
+                }
+
+                fetch('/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(body)
+                }).then(function(response){
+
+                    switch (response.status) {
+                        case 200: // success
+                            window.location.href = '/success.html';
+                            break;
+                        case 401: // unauthorized
+                            throw('Invalid username or password');
+                        default: // error
+                            throw('Error: ' + response.status);
+                    }
+                }).catch(function(error){
+                    alert('Error: ' + error);
+                });
+            });
+       </script>
+
+</body>
+</html>
